@@ -1,15 +1,18 @@
 from flask import Flask, jsonify
-from flask_pymongo import PyMongo  # Importe o PyMongo
+from flask_mongoengine import MongoEngine
 import requests
 import datetime
 
-app = Flask(__name)
+app = Flask(__name__)
+app.config['MONGODB_SETTINGS'] = {
+    'db': 'etl_db',  
+    'host': 'localhost',  
+    'port': 27017,  
+}
 
+db = MongoEngine(app)
 
-app.config['MONGO_URI'] = 'mongodb://localhost:27017/etl_db'
-mongo = PyMongo(app)
-
-class WeatherData(db.Document):  # Use db.Document em vez de db.Model
+class WeatherData(db.Document):
     ingestion_date = db.DateTimeField(default=datetime.datetime.utcnow)
     weather_type = db.StringField(max_length=255)
     values = db.StringField(max_length=255)
@@ -22,10 +25,10 @@ def etl():
     transformed_data = transform_data(weather_data)
     load_data(transformed_data)
     
-    return jsonify({'message': 'ETL realizada!'})
+    return jsonify({'message': 'ETL completa'})
 
 def get_openweather_data():
-    api_key = 'YOUR_API_KEY'  
+    api_key = '16fc3a8a132ce0a1419aa5a3a6c9b66d'  
     url = f'http://api.openweathermap.org/data/2.5/weather?q=CITY&appid={api_key}'
     response = requests.get(url)
     
@@ -38,7 +41,7 @@ def get_openweather_data():
 def transform_data(data):
     weather_type = data['weather'][0]['main']
     values = data['main']['temp']
-    usage = 'Exemplo de uso'
+    usage = 'exemplo'
     
     return {
         'weather_type': weather_type,
@@ -57,5 +60,4 @@ def load_data(data):
 
 
 if __name__ == '__main__':
-    db.create_all()
     app.run(debug=True)
