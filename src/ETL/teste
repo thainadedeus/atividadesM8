@@ -1,0 +1,18 @@
+import unittest
+import app
+
+class ETLTest(unittest.TestCase):
+    def setUp(self):
+        app.app.config['TESTING'] = True
+        self.app = app.app.test_client()
+        app.db.create_all()
+    
+    def tearDown(self):
+        app.db.drop_all()
+
+    def test_etl_process(self):
+        response = self.app.get('/etl')
+        self.assertEqual(response.status_code, 200)
+
+if __name__ == '__main__':
+    unittest.main()
