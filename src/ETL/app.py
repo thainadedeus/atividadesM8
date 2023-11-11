@@ -1,63 +1,53 @@
-from flask import Flask, jsonify
-from flask_mongoengine import MongoEngine
 import requests
 import datetime
+import pprint
+from datetime import datetime
+from pymongo import MongoClient
 
-app = Flask(__name__)
-app.config['MONGODB_SETTINGS'] = {
-    'db': 'etl_db',  
-    'host': 'localhost',  
-    'port': 27017,  
-}
+class WeatherETL:
+    def __init__(self):
+        self.client = MongoClient("mongodb://localhost:27017/")
+        self.db = self.client["etl_db"]
+        self.collection = self.db["weather_data"]
 
-db = MongoEngine(app)
+    def get_openweather_data(self, city):
+        url = "http://api.openweathermap.org/data/2.5/weather"
+        api_key = "ed69a7ed3a90d9d0190bd94758dd11af"
+        params = {
+            "q": city,
+            "appid": api_key
+        }
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            return data
+        else:
+            print(f"Falha ao obter dados para {city}. Código de status:", response.status_code)
+            return None
 
-class WeatherData(db.Document):
-    ingestion_date = db.DateTimeField(default=datetime.datetime.utcnow)
-    weather_type = db.StringField(max_length=255)
-    values = db.StringField(max_length=255)
-    usage = db.StringField(max_length=255)
+    def etl_to_mongodb(self, data, city):
+        uso = self.determine_usage(data)
+        document = {
+            "Data da Ingestão": datetime.now(),
+            "Cidade": city,
+            "Tipo": "Condições Meteorológicas",
+            "Valores": data,
+            "Uso": uso
+        }
+        result = self.collection.insert_one(document)
+        print(f"Documento inserido com o ID: {result.inserted_id}")
 
+    def determine_usage(self, data):
+        if data['main']['temp'] > 25:
+            return "Clima Quente"
+        else:
+            return "Clima Moderado"
 
-@app.route('/etl')
-def etl():
-    weather_data = get_openweather_data()
-    transformed_data = transform_data(weather_data)
-    load_data(transformed_data)
-    
-    return jsonify({'message': 'ETL completa'})
+if __name__ == "__main__":
+    etl_processor = WeatherETL()
+    cidades_brasileiras = ["São Paulo", "Rio de Janeiro", "Brasília", "Salvador", "Fortaleza", "Belo Horizonte", "Manaus", "Curitiba", "Recife", "Porto Alegre"]
 
-def get_openweather_data():
-    api_key = '16fc3a8a132ce0a1419aa5a3a6c9b66d'  
-    url = f'http://api.openweathermap.org/data/2.5/weather?q=CITY&appid={api_key}'
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        data = response.json()
-        return data
-    else:
-        return None
-
-def transform_data(data):
-    weather_type = data['weather'][0]['main']
-    values = data['main']['temp']
-    usage = 'exemplo'
-    
-    return {
-        'weather_type': weather_type,
-        'values': values,
-        'usage': usage
-    }
-
-def load_data(data):
-    new_data = WeatherData(
-        ingestion_date=data['ingestion_date'],
-        weather_type=data['weather_type'],
-        values=data['values'],
-        usage=data['usage']
-    )
-    new_data.save()
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    for cidade in cidades_brasileiras:
+        data = etl_processor.get_openweather_data(cidade)
+        if data:
+            etl_processor.etl_to_mongodb(data, cidade)
