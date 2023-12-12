@@ -1,0 +1,30 @@
+CREATE
+OR REPLACE VIEW "public"."consumo_por_rendimento" AS
+SELECT
+   di.num_dom,
+   di.estrato_pof,
+   di.tipo_situacao_reg,
+   di.cod_upa,
+   di.num_uc,
+   di.cod_informante,
+   di.quadro,
+   di.seq,
+   di.v9001,
+   di.v9002,
+   di.v8000,
+   di.v9010,
+   di.v9011,
+   di.v9012,
+   di.v4104,
+   di.v4105,
+   di.deflator,
+   di.v8000_defla,
+   di.cod_imput_valor,
+   di.fator_anualizacao,
+   di.peso,
+   di.peso_final,
+   di.v9004,
+   rt.renda_total
+FROM
+   despesa_individual di
+   LEFT JOIN rendimento_trabalho rt ON di.num_dom = rt.num_dom;
