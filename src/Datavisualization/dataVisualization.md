@@ -21,3 +21,4 @@ O gráfico de barras mostra três categorias diferentes: “Monetária, à vista
 1. A primeira barra representa a categoria “Monetária, à vista, para a Unidade de Consumo” e atinge até 5.000.000 no eixo y.
 2. A segunda barra representa a categoria “Cartão de crédito, à vista, para a Unidade de Consumo Forma de Aquisição” e se estende até aproximadamente 3.500.000 no eixo y.
 3. A terceira barra representa a categoria “Doação” e é significativamente menor que as outras duas barras, atingindo cerca de 1.500.000 no eixo y.
+![Gráfico](https://github.com/thainadedeus/atividadesM8/blob/main/imagens/grafico.png)
